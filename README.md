@@ -1,16 +1,4 @@
-# Please Support This Project!
-
-This project is being developed during my spare time.  I would appreciate a donation if you found it useful.
-
-[![](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=53CD2WNX3698E&lc=US&item_name=PREngineer&item_number=tvhProxy&currency_code=USD&bn=PP%2dDonationsBF%3abtn_donateCC_LG%2egif%3aNonHosted)
-
-You can also support me by sending a BitCoin donation to the following address:
-
-19JXFGfRUV4NedS5tBGfJhkfRrN2EQtxVo
-
-----
-
-# tvhProxy
+# TVHProxy
 
 tvhProxy exposes a minimal HDHomeRun-compatible HTTP interface that proxies channels and EPG
 from a running TVHeadend instance so clients (like HDHomeRun apps or Plex DVR) can discover
@@ -68,7 +56,7 @@ the variable is not provided.
     listen on container port `8095` and map host port `8080` to it:
 
 ```bash
-docker run -e TVH_PROXY_PORT=8095 -p 8080:8095 your-registry/tvhproxy:latest
+docker run -e TVH_PROXY_PORT=8095 -p 8080:8095 knex666/tvhproxy:latest
 ```
 
 Note: the `EXPOSE` line in the `Dockerfile` is informational only; the process inside
@@ -91,7 +79,7 @@ environment variables to it:
 version: "3"
 services:
     tvhproxy:
-        image: prengineer/tvhproxy:latest
+        image: knex666/tvhproxy:latest
         container_name: tvhproxy
         restart: unless-stopped
         ports:

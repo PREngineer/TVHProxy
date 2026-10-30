@@ -21,7 +21,8 @@ RUN apt-get update \
     && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/* /root/.cache/pip
 
-COPY tvhProxy.py ssdp.py requirements.txt templates/ /app/
+COPY tvhProxy.py ssdp.py requirements.txt /app/
+COPY templates/ /app/templates/
 
 EXPOSE 5004
 

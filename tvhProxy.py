@@ -82,11 +82,16 @@ def _read_cache():
 def _write_cache(data_bytes):
     tmp = CACHE_FILE + ".tmp"
     try:
+        cache_dir = os.path.dirname(CACHE_FILE)
+        if cache_dir:
+            os.makedirs(cache_dir, exist_ok=True)
         with open(tmp, "wb") as fh:
             fh.write(data_bytes)
         os.replace(tmp, CACHE_FILE)
+        return True
     except Exception as e:
         logger.error("Failed to write cache: %s", e)
+        return False
 
 
 def _get_genres():
@@ -194,9 +199,13 @@ def _build_xmltv():
             stop_datetime = (
                 datetime.strptime(child.attrib["stop"], "%Y%m%d%H%M%S %z").astimezone(tz=None).replace(tzinfo=None)
             )
-            if stop_datetime > datetime.now() and start_datetime < datetime.now() + timedelta(hours=72):
-                start_timestamp = int(round(datetime.timestamp(start_datetime)))
-                epg_event = epg_events[channelUuid][start_timestamp]
+            start_timestamp = int(round(datetime.timestamp(start_datetime)))
+            epg_event = epg_events.get(channelUuid, {}).get(start_timestamp)
+            if (
+                epg_event is not None
+                and stop_datetime > datetime.now()
+                and start_datetime < datetime.now() + timedelta(hours=72)
+            ):
                 if "image" in epg_event:
                     programmeImage = ElementTree.SubElement(child, "icon")
                     imageUrl = str(epg_event["image"])
@@ -205,7 +214,7 @@ def _build_xmltv():
                     programmeImage.attrib["src"] = imageUrl
                 if "genre" in epg_event:
                     for genreId in epg_event["genre"]:
-                        for category in genres[genreId]:
+                        for category in genres.get(genreId, []):
                             programmeCategory = ElementTree.SubElement(child, "category")
                             programmeCategory.text = category
                 if "episodeOnscreen" in epg_event:
@@ -261,12 +270,12 @@ def _fetch_and_update_cache():
             new_data = _build_xmltv()
             old = _read_cache()
             if old != new_data:
-                _write_cache(new_data)
-                logger.info("EPG cache updated")
+                if _write_cache(new_data):
+                    logger.info("EPG cache updated: %s", CACHE_FILE)
             else:
                 logger.info("EPG unchanged; no update written")
     except Exception as e:
-        logger.error("Error fetching/updating EPG cache: %s", e)
+        logger.exception("Error fetching/updating EPG cache: %s", e)
 
 
 def _get_xmltv():
@@ -397,7 +406,7 @@ def epg_xml():
 
 @app.route("/device.xml")
 def device_xml():
-    return render_template("device.xml", device=discoverData)
+    return Response(render_template("device.xml", data=discoverData), mimetype="application/xml")
 
 def main():
     http = WSGIServer(
